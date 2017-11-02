@@ -38,11 +38,40 @@ public class RhinoController : MonoBehaviour
     }
     private void OnEnable()
     {
-        StartCoroutine("ProcessImpact");
+        GameObject go = GameObject.FindGameObjectWithTag(crystalTag);
+        if (go != null)
+            {
+            target = go.transform;
+            StartCoroutine("ProcessState");
+        }
     }
-
-    private IEnumerator ProcessImpact()
+    private IEnumerator ProcessState()
     {
+        while (target != null)
+        {
+            //隨機產生一點讓犀牛前往(以水晶為圓心 半徑為衝撞距離)
+            navMeshAgent.speed = walkingSpeed;
+            float randomRad = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+            float disrance = Vector3.Distance(impactTarget.position, transform.position);
+            Vector3 randompos = target.position + new Vector3(Mathf.Cos(randomRad), 0, Mathf.Sin(randomRad)) * disrance;
+            navMeshAgent.SetDestination(randompos);
+            yield return null;
+            //等待犀牛走到目的地
+            while (navMeshAgent.remainingDistance > navMeshAgent.stoppingDistance)
+            {
+                yield return null;
+            }
+            //目標不再,跳出迴圈
+            if (target == null)
+                yield break;
+            //開始攻擊
+            //等待2秒
+            yield return new WaitForSeconds(2f);
+        }
+    }
+    private IEnumerator ProcessImpact()
+    { 
+        transform .LookAt( target);
         aimSlider.gameObject.SetActive(true);
         aimSlider.value = aimSlider.minValue;
         aimSlider.maxValue = impactChargeTime;
